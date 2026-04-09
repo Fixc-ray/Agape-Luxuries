@@ -76,7 +76,7 @@ export default function Home() {
 
       <Link
         to="/men"
-        className="inline-block mt-5 px-5 py-2 bg-yellow-600 hover:bg-yellow-500 text-black text-sm font-semibold transition"
+        className="inline-block mt-5 px-5 py-2 bg-yellow-600 text-black text-sm font-semibold transition bg-white/10 backdrop-blur-md rounded-full p-1 shadow-lg flex gap-1"
       >
         SHOP NOW
       </Link>
