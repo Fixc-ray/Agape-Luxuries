@@ -75,7 +75,7 @@ export default function Home() {
       </p>
 
       <Link
-        to="/men"
+        to="/fragrance-hero"
         className="inline-block mt-5 px-5 py-2 bg-yellow-600 text-black text-sm font-semibold transition bg-white/10 backdrop-blur-md rounded-full p-1 shadow-lg flex gap-1"
       >
         SHOP NOW

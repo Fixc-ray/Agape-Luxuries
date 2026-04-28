@@ -6,7 +6,7 @@ export default function Home() {
 
       {/* MEN */}
       <Link
-        to="/men"
+        to="/fragrance-hero"
         className="relative group flex items-center justify-center"
       >
         {/* BACKGROUND IMAGE */}
