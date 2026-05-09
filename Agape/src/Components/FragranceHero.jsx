@@ -1,6 +1,18 @@
+// FragranceHero.jsx
+
 import { useEffect, useState } from "react";
 import "../index.css";
 import { useNavigate } from "react-router-dom";
+import Blogs from "./Blogs";
+
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+
+import { db } from "../Components/firebase";
 
 const slides = [
   {
@@ -8,8 +20,9 @@ const slides = [
     title: "Evoke Every \nEmotion with \nFragsence",
     desc: "Bold masculine fragrances crafted for presence and confidence.",
     image:
-      "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1200",
+      "https://i.pinimg.com/736x/f4/28/a8/f428a8f8fcda2f0f5247f43acf1dea16.jpg",
   },
+
   {
     type: "jewelry",
     title: "Refined Luxury \nJewelry \nCollection",
@@ -21,140 +34,358 @@ const slides = [
 
 export default function FragranceHero() {
   const [index, setIndex] = useState(0);
+
+  const [bestSellers, setBestSellers] =
+    useState([]);
+
   const navigate = useNavigate();
 
-  // Auto switch backgrounds
+  // AUTO HERO SLIDER
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % slides.length);
+      setIndex(
+        (prev) => (prev + 1) % slides.length
+      );
     }, 6000);
+
     return () => clearInterval(interval);
+  }, []);
+
+  // FETCH BEST SELLERS
+  useEffect(() => {
+    const fetchBestSellers = async () => {
+      try {
+        const q = query(
+          collection(db, "perfumes"),
+          where("isBestSeller", "==", true)
+        );
+
+        const snapshot = await getDocs(q);
+
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setBestSellers(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchBestSellers();
   }, []);
 
   const current = slides[index];
 
   return (
-    <div className="min-h-screen bg-[#0b0f14]">
-
-      {/* Container */}
-      <div className="w-full min-h-screen overflow-hidden flex flex-col justify-between">
-
-        {/* Hero Section */}
+    <div className="min-h-screen bg-[#0b0f14] overflow-hidden">
+      {/* HERO SECTION */}
+      <div className="relative min-h-screen">
+        {/* BG IMAGE */}
         <div
-          className="grid md:grid-cols-2 gap-6 px-8 md:px-16 py-16 text-white flex-grow bg-cover bg-center relative transition-all duration-1000"
-          style={{ backgroundImage: `url(${current.image})` }}
-        >
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-[#0b0f14]/80"></div>
+          className="
+            absolute inset-0
+            bg-cover bg-center
+            transition-all duration-1000
+            scale-105
+          "
+          style={{
+            backgroundImage: `url(${current.image})`,
+          }}
+        />
 
-          {/* Left */}
-          <div className="relative z-10 flex flex-col justify-center">
-            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight whitespace-pre-line">
+        {/* OVERLAY */}
+        <div className="absolute inset-0 bg-black/55" />
+
+        {/* HERO CONTENT */}
+        <div
+          className="
+            relative z-10
+            grid lg:grid-cols-2
+            gap-12
+            px-5 sm:px-8 md:px-14
+            pt-28 md:pt-36
+            pb-48 md:pb-56
+            min-h-screen
+            text-white
+          "
+        >
+          {/* LEFT */}
+          <div className="flex flex-col justify-center">
+            <h1
+              className="
+                text-4xl
+                sm:text-5xl
+                md:text-6xl
+                lg:text-7xl
+                font-extrabold
+                leading-[1.05]
+                whitespace-pre-line
+                max-w-[700px]
+              "
+            >
               {current.title}
             </h1>
 
-            <p className="mt-6 text-sm text-gray-300 max-w-md">
+            <p
+              className="
+                mt-5
+                text-sm sm:text-base
+                text-gray-300
+                max-w-md
+                leading-relaxed
+              "
+            >
               {current.desc}
             </p>
-
-            {/* Socials */}
-<div className="flex gap-4 mt-6 items-center">
-  
-  <a href="#" className="p-2 border border-gray-500 rounded-full hover:border-white transition">
-    <img src="/Images/Facebook.png" alt="Facebook" className="w-4 h-4" />
-  </a>
-
-  <a href="#" className="p-2 border border-gray-500 rounded-full hover:border-white transition">
-    <img src="/Images/tiktok.png" alt="TikTok" className="w-4 h-4" />
-  </a>
-
-  <a href="#" className="p-2 border border-gray-500 rounded-full hover:border-white transition">
-    <img src="/Images/ig.png" alt="Instagram" className="w-4 h-4" />
-  </a>
-
-</div>
           </div>
 
-          {/* Right */}
-          <div className="relative z-10 flex flex-col justify-center">
-            <div className="text-right">
-              <p className="text-xl font-semibold">$203</p>
-              <p className="text-sm text-gray-400">Gold Memoir</p>
+          {/* RIGHT */}
+          <div
+            className="
+              flex flex-col
+              justify-center
+              lg:items-end
+              lg:text-right
+              text-left
+            "
+          >
+            <div className="max-w-md">
+              <p
+                className="
+                  text-2xl md:text-3xl
+                  font-semibold
+                "
+              >
+                Premium Collection
+              </p>
+
+              <p
+                className="
+                  text-sm md:text-base
+                  text-gray-300
+                  mt-3
+                  leading-relaxed
+                "
+              >
+                Elevate your everyday moments with
+                bold fragrances crafted for presence
+                and distinction.
+              </p>
             </div>
 
-            <p className="mt-6 text-sm text-gray-400 max-w-sm ml-auto text-right">
-              Elevate your everyday moments with bold masculine fragrances
-              crafted for presence, confidence, and distinction.
-            </p>
-
-            <div className="flex justify-end items-center gap-4 mt-6">
+            <div className="flex gap-4 mt-8 flex-wrap">
               {current.type === "jewelry" ? (
-                <button className="bg-gray-500 text-white px-5 py-2 rounded-md font-medium cursor-not-allowed">
+                <button
+                  className="
+                    bg-gray-500
+                    px-6 py-3 rounded-full
+                    cursor-not-allowed
+                    text-sm md:text-base
+                  "
+                >
                   Coming Soon
                 </button>
               ) : (
                 <button
-                onClick={() => navigate("/products")}
-                className="bg-white text-black px-5 py-2 rounded-md font-medium hover:bg-gray-200 transition"
+                  onClick={() =>
+                    navigate("/products")
+                  }
+                  className="
+                    bg-white text-black
+                    px-6 py-3 rounded-full
+                    font-medium
+                    text-sm md:text-base
+                    hover:bg-gray-200
+                    transition
+                  "
                 >
-                    Shop Now
+                  Shop Now
                 </button>
               )}
 
-              <span className="text-sm text-gray-400 hover:text-white cursor-pointer">
-                Best of Fragsence →
-              </span>
+              <button
+                className="
+                  border border-white/30
+                  px-6 py-3 rounded-full
+                  text-sm md:text-base
+                  hover:bg-white
+                  hover:text-black
+                  transition
+                "
+              >
+                Explore
+              </button>
             </div>
+          </div>
+        </div>
 
-            {/* Floating Images ONLY for perfume */}
-            {current.type === "perfume" && (
-              <>
-                <img
-                  src="/perfume1.png"
-                  className="absolute top-0 left-20 w-48 rotate-[-15deg]"
-                />
-                <img
-                  src="/perfume2.png"
-                  className="absolute bottom-0 right-20 w-52 rotate-[15deg]"
-                />
-              </>
+        {/* BEST SELLERS */}
+        <div
+          className="
+            absolute bottom-6 md:bottom-10
+            left-0 w-full
+            z-20
+            overflow-hidden
+          "
+        >
+          <div
+            className="
+              flex animate-scroll
+              gap-3 sm:gap-4
+              min-w-max
+              px-4 md:px-6
+            "
+          >
+            {[...bestSellers, ...bestSellers].map(
+              (product, index) => {
+                const discount =
+                  product.oldPrice &&
+                  product.oldPrice >
+                    product.price
+                    ? Math.round(
+                        ((product.oldPrice -
+                          product.price) /
+                          product.oldPrice) *
+                          100
+                      )
+                    : null;
+
+                return (
+                  <div
+                    key={`${product.id}-${index}`}
+                    onClick={() =>
+                      navigate(
+                        `/product/${product.id}`
+                      )
+                    }
+                    className="
+                      relative
+                      w-[120px] sm:w-[150px] md:w-[170px]
+                      sm:w-[170px]
+                      md:w-[190px]
+                      h-[10px]
+                      sm:h-[220px]
+                      md:h-[240px]
+                      rounded-[24px]
+                      overflow-hidden
+                      cursor-pointer
+                      shrink-0
+                      group
+                    "
+                  >
+                    {/* IMAGE */}
+                    <img
+                      src={
+                        product.imageUrl ||
+                        product.image ||
+                        "/placeholder.png"
+                      }
+                      alt={product.name}
+                      className="
+                        absolute inset-0
+                        w-full h-full
+                        object-cover
+                        group-hover:scale-105
+                        transition duration-700
+                      "
+                    />
+
+                    {/* OVERLAY */}
+                    <div className="absolute inset-0 bg-black/35" />
+
+                    {/* DISCOUNT */}
+                    {discount && (
+                      <span
+                        className="
+                          absolute top-3 right-3
+                          bg-black/40
+                          backdrop-blur-md
+                          text-white
+                          text-[9px] sm:text-[10px]
+                          px-2 py-1
+                          rounded-full
+                        "
+                      >
+                        {discount}% OFF
+                      </span>
+                    )}
+
+                    {/* CONTENT */}
+                    <div
+                      className="
+                        absolute bottom-0 left-0
+                        w-full
+                        p-3 sm:p-4
+                        text-white
+                      "
+                    >
+                      <p
+                        className="
+                          text-[9px] sm:text-[10px]
+                          uppercase
+                          text-white/70
+                          tracking-widest
+                          mb-1
+                        "
+                      >
+                        Best Seller
+                      </p>
+
+                      <h3
+                        className="
+                          text-xs sm:text-sm
+                          font-semibold
+                          line-clamp-1
+                        "
+                      >
+                        {product.name}
+                      </h3>
+
+                      <div
+                        className="
+                          flex items-center
+                          justify-between
+                          mt-3
+                          gap-2
+                        "
+                      >
+                        <span
+                          className="
+                            text-[10px] sm:text-xs
+                            bg-black/40
+                            px-2 py-1
+                            rounded-full
+                          "
+                        >
+                          KSh{" "}
+                          {product.price?.toLocaleString()}
+                        </span>
+
+                        <button
+                          className="
+                            bg-white text-black
+                            text-[9px] sm:text-[10px]
+                            px-3 py-1
+                            rounded-full
+                            font-medium
+                          "
+                        >
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
             )}
           </div>
         </div>
-
-        {/* Auto Scrolling Products */}
-        <div className="overflow-hidden bg-[#0b0f14]">
-          <div className="flex animate-scroll min-w-max">
-
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="flex">
-
-                <div className="w-[260px] bg-[#111827] p-6 text-gray-300">
-                  <p className="text-white font-semibold">BEST SELLER</p>
-                </div>
-
-                <div className="w-[260px] bg-[#1f2937] p-6">
-                  <img src="/p1.png" className="w-12 mb-3" />
-                  <p className="text-white">$119</p>
-                </div>
-
-                <div className="w-[260px] bg-[#273344] p-6">
-                  <img src="/p2.png" className="w-12 mb-3" />
-                  <p className="text-white">$169</p>
-                </div>
-
-                <div className="w-[260px] bg-[#2f3e52] p-6">
-                  <img src="/p3.png" className="w-12 mb-3" />
-                  <p className="text-white">$250</p>
-                </div>
-
-              </div>
-            ))}
-
-          </div>
-        </div>
-
       </div>
+
+      {/* BLOGS */}
+      <Blogs />
     </div>
   );
 }

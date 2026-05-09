@@ -1,155 +1,188 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
+import {
+  getCart,
+  updateCartQty,
+  removeFromCart,
+} from "../Services/cartService";
 
 export default function Cart() {
   const navigate = useNavigate();
+  const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [cart, setCart] = useState([
-    {
-      id: 1,
-      name: "Hakimi Perfume",
-      volume: "35 ml",
-      price: 99000,
-      qty: 1,
-      image: "/perfume1.png",
-    },
-    {
-      id: 2,
-      name: "Ramsey Perfume",
-      volume: "35 ml",
-      price: 89000,
-      qty: 1,
-      image: "/perfume2.png",
-    },
-  ]);
-
-  const updateQty = (id, delta) => {
-    setCart((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, qty: Math.max(1, item.qty + delta) }
-          : item
-      )
-    );
+  // 🔥 Load cart from Firebase
+  const loadCart = async () => {
+    const data = await getCart();
+    setCart(data);
+    setLoading(false);
   };
 
-  const removeItem = (id) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  // 🔄 Update quantity
+  const updateQty = async (id, delta) => {
+    const item = cart.find((i) => i.id === id);
+    if (!item) return;
+
+    const newQty = Math.max(1, item.qty + delta);
+    await updateCartQty(id, newQty);
+    loadCart();
+  };
+
+  // ❌ Remove item
+  const removeItem = async (id) => {
+    await removeFromCart(id);
+    loadCart();
   };
 
   const subtotal = cart.reduce(
-    (acc, item) => acc + item.price * item.qty,
+    (acc, item) => acc + (item.price || 0) * (item.qty || 1),
     0
   );
 
-  return (
-    <div className="max-w-md mx-auto px-4 mt-24 pb-32">
-      
-      {/* HEADER */}
-      <h2 className="text-2xl font-semibold mb-6 tracking-tight">
-        My Cart
-      </h2>
+  if (loading) {
+    return (
+      <div className="mt-32 text-center text-gray-500">
+        Loading cart...
+      </div>
+    );
+  }
+return (
+  <div className="max-w-7xl mx-auto px-6 py-20">
 
-      {/* EMPTY STATE */}
-      {cart.length === 0 && (
-        <div className="text-center mt-20 text-gray-500">
-          <p>Your cart feels a little empty 🛒</p>
-          <button
-            onClick={() => navigate("/")}
-            className="mt-4 bg-black text-white px-6 py-2 rounded-full"
-          >
-            Start Shopping
-          </button>
-        </div>
-      )}
+    {/* TITLE */}
+    <h1 className="text-4xl font-semibold mb-10">Shopping Cart</h1>
 
-      {/* ITEMS */}
-      <div className="space-y-4">
-        {cart.map((item) => (
-          <div
-            key={item.id}
-            className="flex gap-4 bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition"
-          >
-            {/* IMAGE */}
-            <img
-              src={item.image}
-              alt={item.name}
-              className="w-20 h-20 object-contain bg-gray-50 rounded-lg"
-            />
+    {cart.length === 0 ? (
+      <div className="text-center text-gray-500 mt-20">
+        <p>Your cart is empty 🛒</p>
+        <button
+          onClick={() => navigate("/")}
+          className="mt-4 bg-black text-white px-6 py-2 rounded-full"
+        >
+          Start Shopping
+        </button>
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-            {/* INFO */}
-            <div className="flex-1">
-              <div className="flex justify-between">
-                <h3 className="font-medium text-sm">
-                  {item.name}
-                </h3>
+        {/* LEFT - CART TABLE */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border p-6">
 
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="text-gray-400 hover:text-red-500 transition"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+          {/* HEADER */}
+          <div className="grid grid-cols-5 text-sm text-gray-500 mb-4 px-2">
+            <span className="col-span-2">Product</span>
+            <span className="text-center">Quantity</span>
+            <span className="text-center">Total</span>
+            <span className="text-center">Action</span>
+          </div>
 
-              <p className="text-xs text-gray-500 mt-1">
-                {item.volume}
-              </p>
-
-              <p className="font-semibold mt-2 text-sm">
-                KES {item.price.toLocaleString()}
-              </p>
-
-              {/* QTY CONTROL */}
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center bg-gray-100 rounded-full px-2">
-                  <button
-                    onClick={() => updateQty(item.id, -1)}
-                    className="px-2 text-lg"
-                  >
-                    −
-                  </button>
-                  <span className="px-2 text-sm">{item.qty}</span>
-                  <button
-                    onClick={() => updateQty(item.id, 1)}
-                    className="px-2 text-lg"
-                  >
-                    +
-                  </button>
+          {/* ITEMS */}
+          <div className="space-y-4">
+            {cart.map((item) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-5 items-center border rounded-xl p-4"
+              >
+                {/* PRODUCT */}
+                <div className="col-span-2 flex items-center gap-4">
+                  <img
+                    src={item.imageUrl || "/placeholder.png"}
+                    className="w-16 h-16 object-contain bg-gray-50 rounded"
+                  />
+                  <div>
+                    <p className="font-medium text-sm">{item.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {item.volume || "—"}
+                    </p>
+                  </div>
                 </div>
 
-                <span className="text-sm font-medium">
+                {/* QTY */}
+                <div className="flex justify-center">
+                  <div className="flex items-center border rounded-full px-3">
+                    <button
+                      onClick={() => updateQty(item.id, -1)}
+                      className="px-2 text-lg"
+                    >
+                      −
+                    </button>
+                    <span className="px-2">{item.qty}</span>
+                    <button
+                      onClick={() => updateQty(item.id, 1)}
+                      className="px-2 text-lg"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* TOTAL */}
+                <div className="text-center font-medium">
                   KES {(item.qty * item.price).toLocaleString()}
-                </span>
+                </div>
+
+                {/* REMOVE */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* STICKY SUMMARY */}
-      {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-lg">
-          <div className="max-w-md mx-auto">
-            
-            <div className="flex justify-between mb-3 text-sm">
-              <span>Subtotal</span>
-              <span className="font-semibold">
-                KES {subtotal.toLocaleString()}
-              </span>
-            </div>
-
-            <button
-              onClick={() => navigate("/checkout")}
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-xl font-medium transition"
-            >
-              Proceed to Checkout
-            </button>
-
-          </div>
+          {/* UPDATE BUTTON */}
+          <button className="mt-6 bg-black text-white px-6 py-2 rounded-full">
+            Update Cart
+          </button>
         </div>
-      )}
-    </div>
-  );
-}
+
+        {/* RIGHT - SUMMARY */}
+        <div className="bg-white rounded-2xl border p-6 h-fit">
+
+          <h2 className="font-semibold mb-6">Order Summary</h2>
+
+          {/* SUBTOTAL */}
+          <div className="flex justify-between text-sm mb-2">
+            <span>Subtotal</span>
+            <span>KES {subtotal.toLocaleString()}</span>
+          </div>
+
+          {/* DISCOUNT */}
+          <div className="flex justify-between text-sm mb-2">
+            <span>Discount</span>
+            <span>KES 0</span>
+          </div>
+
+          {/* DELIVERY */}
+          <div className="flex justify-between text-sm mb-4">
+            <span>Delivery Fee</span>
+            <span>KES 0</span>
+          </div>
+
+          {/* TOTAL */}
+          <div className="flex justify-between font-semibold text-lg border-t pt-4 mb-6">
+            <span>Total</span>
+            <span>KES {subtotal.toLocaleString()}</span>
+          </div>
+
+          {/* CHECKOUT BUTTON */}
+          <button
+            onClick={() => navigate("/checkout")}
+            className="w-full bg-black text-white py-3 rounded-full"
+          >
+            Checkout Now
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+  );}
