@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getDashboardStats } from "../Services/dashboardService";
 import {
   LineChart,
@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  YAxis,
 } from "recharts";
 
 export default function AdminDashboard() {
@@ -19,7 +20,7 @@ export default function AdminDashboard() {
         const res = await getDashboardStats();
         setData(res);
       } catch (err) {
-        console.error("Dashboard error:", err);
+        console.error("Dashboard load error:", err);
       } finally {
         setLoading(false);
       }
@@ -28,70 +29,187 @@ export default function AdminDashboard() {
     load();
   }, []);
 
+  /* ALL ORDERS */
+  const orders = useMemo(() => data?.orders || [], [data]);
+
+  /* TOTAL REVENUE */
+  const revenue = useMemo(() => {
+    // Use precomputed revenue from service if available
+    if (typeof data?.revenue === "number") {
+      return data.revenue;
+    }
+
+    // Fallback: calculate from orders
+    return orders.reduce(
+      (sum, order) => sum + (Number(order.total) || 0),
+      0
+    );
+  }, [data, orders]);
+
+  /* REVENUE TREND (GROUPED BY DATE) */
+  const chartData = useMemo(() => {
+    const grouped = {};
+
+    orders.forEach((order) => {
+      const timestamp = order.createdAt?.seconds;
+
+      // Skip orders without a valid timestamp
+      if (!timestamp) return;
+
+      const date = new Date(timestamp * 1000).toLocaleDateString("en-KE", {
+        month: "short",
+        day: "numeric",
+      });
+
+      grouped[date] =
+        (grouped[date] || 0) + (Number(order.total) || 0);
+    });
+
+    return Object.entries(grouped).map(([date, total]) => ({
+      name: date,
+      revenue: total,
+    }));
+  }, [orders]);
+
+  /* ORDER STATUS COUNTS */
+  const delivered = useMemo(
+    () =>
+      orders.filter((o) =>
+        ["delivered", "completed"].includes(
+          String(o.status || "").toLowerCase()
+        )
+      ).length,
+    [orders]
+  );
+
+  const pending = useMemo(
+    () =>
+      orders.filter(
+        (o) =>
+          String(o.status || "").toLowerCase() === "pending"
+      ).length,
+    [orders]
+  );
+
+  const cancelled = useMemo(
+    () =>
+      orders.filter(
+        (o) =>
+          String(o.status || "").toLowerCase() === "cancelled"
+      ).length,
+    [orders]
+  );
+
+  /* TOTAL ORDERS */
+const totalOrders = useMemo(() => {
+  // Use value from service if available
+  if (typeof data?.totalOrders === "number") {
+    return data.totalOrders;
+  }
+
+  // Fallback to counting loaded orders
+  return orders.length;
+}, [data, orders]);
+
   if (loading) {
-    return <p className="text-gray-400">Loading dashboard...</p>;
+    return (
+      <p className="text-gray-400 p-6">
+        Loading dashboard...
+      </p>
+    );
   }
 
   if (!data) {
-    return <p className="text-red-400">Failed to load data</p>;
+    return (
+      <p className="text-red-500 p-6">
+        Failed to load dashboard data.
+      </p>
+    );
   }
 
-  // 🔥 GROUPED CHART (REAL ANALYTICS)
-  const grouped = {};
-
-  data.orders?.forEach((order) => {
-    if (!order.date?.seconds) return;
-
-    const date = new Date(order.date.seconds * 1000)
-      .toLocaleDateString();
-
-    grouped[date] = (grouped[date] || 0) + (Number(order.total) || 0);
-  });
-
-  const chartData = Object.keys(grouped).map((date) => ({
-    name: date,
-    revenue: grouped[date],
-  }));
-
-  // 📊 STATUS COUNTS
-  const delivered = data.orders.filter(o => o.status === "delivered").length;
-  const pending = data.orders.filter(o => o.status === "pending").length;
-  const cancelled = data.orders.filter(o => o.status === "cancelled").length;
-
   return (
-    <div className="space-y-6">
-
-      {/* 🔢 STATS */}
+    <div className="bg-[#f6f6f6] min-h-screen p-6 space-y-6">
+      {/* STATS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card title="Revenue" value={`KES ${formatNumber(data.revenue)}`} />
-        <Card title="Orders" value={data.totalOrders || 0} />
-        <Card title="Products" value={data.totalProducts || 0} />
-        <Card title="Customers" value={data.totalCustomers || 0} />
+        <Card
+          title="Revenue"
+          value={`KES ${formatNumber(revenue)}`}
+        />
+        
+        <Card
+  title="Orders"
+  value={formatNumber(totalOrders)}
+/>
+
+        <Card
+          title="Products"
+          value={data.totalProducts || 0}
+        />
+
+        <Card
+          title="Customers"
+          value={data.totalCustomers || 0}
+        />
       </div>
 
-      {/* 📦 ORDER STATUS */}
-      <div className="grid grid-cols-3 gap-4">
-        <StatusCard label="Delivered" count={delivered} color="text-green-400" />
-        <StatusCard label="Pending" count={pending} color="text-yellow-400" />
-        <StatusCard label="Cancelled" count={cancelled} color="text-red-400" />
+      {/* ORDER STATUS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatusCard
+          label="Delivered"
+          count={delivered}
+          color="text-green-500"
+        />
+
+        <StatusCard
+          label="Pending"
+          count={pending}
+          color="text-yellow-500"
+        />
+
+        <StatusCard
+          label="Cancelled"
+          count={cancelled}
+          color="text-red-500"
+        />
       </div>
 
-      {/* 📈 CHART */}
-      <div className="bg-[#1a1625] p-5 rounded-xl shadow">
-        <h3 className="mb-4 text-gray-400 text-sm">Revenue Trend</h3>
+      {/* REVENUE CHART */}
+      <div className="bg-white p-6 rounded-3xl shadow-sm">
+        <h3 className="text-gray-600 text-sm mb-4">
+          Revenue Trend
+        </h3>
 
         {chartData.length === 0 ? (
-          <p className="text-gray-500 text-sm">No data available</p>
+          <p className="text-gray-400 text-sm">
+            No revenue data available.
+          </p>
         ) : (
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={260}>
             <LineChart data={chartData}>
-              <CartesianGrid stroke="#2a2438" />
-              <XAxis dataKey="name" stroke="#aaa" />
-              <Tooltip />
+              <CartesianGrid stroke="#eee" />
+
+              <XAxis
+                dataKey="name"
+                stroke="#aaa"
+              />
+
+              <YAxis
+                stroke="#aaa"
+                tickFormatter={(value) =>
+                  `${(value / 1000).toFixed(0)}k`
+                }
+              />
+
+              <Tooltip
+                formatter={(value) =>
+                  `KES ${formatNumber(value)}`
+                }
+              />
+
               <Line
                 type="monotone"
                 dataKey="revenue"
-                stroke="#7c3aed"
+                stroke="#f97316"
                 strokeWidth={3}
                 dot={false}
               />
@@ -103,27 +221,31 @@ export default function AdminDashboard() {
   );
 }
 
-/* 🔥 STAT CARD */
+/* STAT CARD */
 function Card({ title, value }) {
   return (
-    <div className="bg-[#1a1625] p-5 rounded-xl shadow hover:scale-[1.02] transition">
+    <div className="bg-white p-5 rounded-3xl shadow-sm hover:shadow-md transition">
       <p className="text-gray-400 text-sm">{title}</p>
-      <p className="text-xl font-semibold mt-2 text-white">{value}</p>
+      <p className="text-2xl font-bold mt-2 text-gray-800">
+        {value}
+      </p>
     </div>
   );
 }
 
-/* 📦 STATUS CARD */
+/* STATUS CARD */
 function StatusCard({ label, count, color }) {
   return (
-    <div className="bg-[#1a1625] p-4 rounded-xl shadow">
+    <div className="bg-white p-5 rounded-3xl shadow-sm">
       <p className="text-gray-400 text-sm">{label}</p>
-      <p className={`text-xl font-bold ${color}`}>{count}</p>
+      <p className={`text-3xl font-bold mt-2 ${color}`}>
+        {count}
+      </p>
     </div>
   );
 }
 
-/* 💰 FORMATTER */
+/* FORMAT NUMBER */
 function formatNumber(num) {
-  return Number(num || 0).toLocaleString();
+  return Number(num || 0).toLocaleString("en-KE");
 }

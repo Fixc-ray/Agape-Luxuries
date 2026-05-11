@@ -1,22 +1,22 @@
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
 import { db } from "../Components/firebase";
-import { collection, addDoc, serverTimestamp, doc, setDoc } from "firebase/firestore";
 
-export const placeOrder = async (orderData) => {
-  
-  const orderRef = await addDoc(collection(db, "orders"), {
-    ...orderData,
-    createdAt: serverTimestamp(),
-  });
+export async function placeOrder(orderData) {
+  try {
+    const docRef = await addDoc(collection(db, "orders"), {
+      ...orderData,
+      createdAt: serverTimestamp(),
+      status: "pending",
+    });
 
-  // 🔥 Auto register client
-  const clientRef = doc(db, "users", orderData.phone);
-
-  await setDoc(clientRef, {
-    name: orderData.name,
-    phone: orderData.phone,
-    email: orderData.email,
-    lastOrder: serverTimestamp(),
-  }, { merge: true });
-
-  return orderRef.id;
-};
+    return docRef.id;
+  } catch (error) {
+    console.error("PLACE ORDER ERROR:", error);
+    throw error;
+  }
+}

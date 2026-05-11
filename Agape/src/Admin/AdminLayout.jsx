@@ -1,37 +1,73 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+} from "lucide-react";
 
 export default function AdminLayout() {
-  const link =
-    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm hover:bg-[#2a2440] transition";
-
   return (
-    <div className="flex min-h-screen bg-[#0f0c1a] text-white">
+    <div className="flex min-h-screen bg-[#f6f6f6]">
 
       {/* SIDEBAR */}
-      <div className="w-64 bg-[#1a1625] p-5 border-r border-[#2a2440]">
+      <div className="w-64 bg-white p-6 border-r border-gray-200 flex flex-col">
 
-        <h2 className="text-lg font-semibold mb-8">Agape</h2>
+        {/* LOGO */}
+        <h2 className="text-xl font-semibold mb-10 text-gray-800">
+          Agape
+        </h2>
 
+        {/* NAV */}
         <nav className="space-y-2">
-          <NavLink to="/admin" className={link}>
-            <LayoutDashboard size={18} /> Dashboard
-          </NavLink>
+          <NavItem
+            to="/admin"
+            icon={<LayoutDashboard size={18} />}
+            label="Dashboard"
+          />
 
-          <NavLink to="/admin/products" className={link}>
-            <Package size={18} /> Products
-          </NavLink>
+          <NavItem
+            to="/admin/products"
+            icon={<Package size={18} />}
+            label="Products"
+          />
 
-          <NavLink to="/admin/orders" className={link}>
-            <ShoppingCart size={18} /> Orders
-          </NavLink>
+          <NavItem
+            to="/admin/orders"
+            icon={<ShoppingCart size={18} />}
+            label="Orders"
+          />
         </nav>
+
+        {/* OPTIONAL FOOTER */}
+        <div className="mt-auto text-xs text-gray-400 pt-10">
+          © Agape Luxuries
+        </div>
       </div>
 
-      {/* MAIN */}
-      <div className="flex-1 p-6">
+      {/* MAIN CONTENT */}
+      <div className="flex-1 p-6 md:p-10">
         <Outlet />
       </div>
     </div>
+  );
+}
+
+/* 🔥 NAV ITEM */
+function NavItem({ to, icon, label }) {
+  return (
+    <NavLink
+      to={to}
+      end
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+          isActive
+            ? "bg-orange-100 text-orange-600"
+            : "text-gray-600 hover:bg-gray-100"
+        }`
+      }
+    >
+      {icon}
+      {label}
+    </NavLink>
   );
 }

@@ -12,6 +12,7 @@ import FragranceHero from "./Components/FragranceHero";
 import ProductGrid from "./Components/ShopPage";
 import ProductDetails from "./Components/ProductDetails";
 import Blogs from "./Components/Blogs";
+import DubaiShippingOrder from "./Components/DubaiShippingOrder";
 
 // ADMIN COMPONENTS
 import AdminLayout from "./Admin/AdminLayout";
@@ -39,20 +40,90 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-
-          {/* HOME */}
+          {/* PUBLIC ROUTES */}
           <Route path="/" element={<Home />} />
 
-          {/* USER ROUTES */}
-          <Route path="/men" element={<Layout><Men /></Layout>} />
-          <Route path="/women" element={<Layout><Women /></Layout>} />
-          <Route path="/cart" element={<Layout><Cart /></Layout>} />
-          <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
-          <Route path="/DubaiShipping" element={<Layout><DubaiShipping /></Layout>} />
-          <Route path="/fragrance-hero" element={<Layout><FragranceHero /></Layout>} />
-          <Route path="/products" element={<Layout><ProductGrid /></Layout>} />
+          <Route
+            path="/men"
+            element={
+              <Layout>
+                <Men />
+              </Layout>
+            }
+          />
 
-          {/* ✅ FIX: Product details now has Navbar */}
+          <Route
+            path="/women"
+            element={
+              <Layout>
+                <Women />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/cart"
+            element={
+              <Layout>
+                <Cart />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/checkout"
+            element={
+              <Layout>
+                <Checkout />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/DubaiShipping"
+            element={
+              <Layout>
+                <DubaiShipping />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/fragrance-hero"
+            element={
+              <Layout>
+                <FragranceHero />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/products"
+            element={
+              <Layout>
+                <ProductGrid />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/blogs"
+            element={
+              <Layout>
+                <Blogs />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/dubai-shipping-order"
+            element={
+              <Layout>
+                <DubaiShippingOrder />
+              </Layout>
+            }
+          />
+
           <Route
             path="/product/:id"
             element={
@@ -62,10 +133,13 @@ function App() {
             }
           />
 
-          {/* 🔐 ADMIN LOGIN */}
-          <Route path="/admin-login" element={<AdminLogin />} />
+          {/* ADMIN LOGIN (PUBLIC) */}
+          <Route
+            path="/admin-login"
+            element={<AdminLogin />}
+          />
 
-          {/* 🔐 PROTECTED ADMIN ROUTES */}
+          {/* PROTECTED ADMIN ROUTES */}
           <Route
             path="/admin"
             element={
@@ -74,15 +148,25 @@ function App() {
               </ProtectedRoute>
             }
           >
+            {/* /admin */}
             <Route index element={<AdminDashboard />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="orders" element={<AdminOrders />} />
-          </Route>
 
+            {/* /admin/products */}
+            <Route
+              path="products"
+              element={<AdminProducts />}
+            />
+
+            {/* /admin/orders */}
+            <Route
+              path="orders"
+              element={<AdminOrders />}
+            />
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
 }
 
-export default App; 
+export default App;
